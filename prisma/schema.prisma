@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model autores {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  nome       String    @db.VarChar(50)
+  sobre      String    @db.VarChar(500)
+  editora_id Int?      @db.UnsignedInt
+  editoras   editoras? @relation(fields: [editora_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_editora_autor")
+  livros     livros[]
+
+  @@index([editora_id], map: "fk_editora_autor")
+}
+
+model clientes {
+  id       Int      @id @default(autoincrement()) @db.UnsignedInt
+  nome     String   @db.VarChar(100)
+  contato  String   @db.VarChar(11)
+  cpf      String   @unique(map: "cpf") @db.VarChar(11)
+  endereco String?  @db.VarChar(200)
+  vendas   vendas[]
+}
+
+model editoras {
+  id      Int       @id @default(autoincrement()) @db.UnsignedInt
+  nome    String    @db.VarChar(50)
+  autores autores[]
+  livros  livros[]
+}
+
+model funcionarios {
+  id      Int      @id @default(autoincrement()) @db.UnsignedInt
+  nome    String   @db.VarChar(100)
+  contato String   @db.VarChar(11)
+  cpf     String   @unique(map: "cpf") @db.VarChar(11)
+  cargo   String   @db.VarChar(30)
+  vendas  vendas[]
+}
+
+model generos {
+  id     Int      @id @default(autoincrement()) @db.UnsignedInt
+  nome   String   @unique(map: "nome") @db.VarChar(30)
+  livros livros[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model livros {
+  id            Int       @id @default(autoincrement()) @db.UnsignedInt
+  nome          String    @db.VarChar(100)
+  descricao     String    @db.VarChar(500)
+  avaliacao     Int?      @db.UnsignedInt
+  classificacao Int?      @db.UnsignedInt
+  n_paginas     Int       @db.UnsignedInt
+  anoPublicacao Int?      @db.UnsignedInt
+  preco         Float     @db.Float
+  genero_id     Int?      @db.UnsignedInt
+  autor_id      Int?      @db.UnsignedInt
+  editora_id    Int?      @db.UnsignedInt
+  autores       autores?  @relation(fields: [autor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_autor_livro")
+  editoras      editoras? @relation(fields: [editora_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_editora_livro")
+  generos       generos?  @relation(fields: [genero_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_genero_livro")
+  vendas        vendas[]
+
+  @@index([autor_id], map: "fk_autor_livro")
+  @@index([editora_id], map: "fk_editora_livro")
+  @@index([genero_id], map: "fk_genero_livro")
+}
+
+model vendas {
+  id             Int           @id @default(autoincrement()) @db.UnsignedInt
+  livro_id       Int?          @db.UnsignedInt
+  cliente_id     Int?          @db.UnsignedInt
+  funcionario_id Int?          @db.UnsignedInt
+  livros         livros?       @relation(fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cliente_venda")
+  funcionarios   funcionarios? @relation(fields: [funcionario_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_funcionario_venda")
+  clientes       clientes?     @relation(fields: [livro_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_livro_venda")
+
+  @@index([cliente_id], map: "fk_cliente_venda")
+  @@index([funcionario_id], map: "fk_funcionario_venda")
+  @@index([livro_id], map: "fk_livro_venda")
+}
